@@ -23,22 +23,22 @@ module Hoop
     end
 
     macro objc_init_method(method_name, crystal_method = nil)
-      {{ "##{crystal_method ||= method_name}".id }}
+      {{ "##{crystal_method = crystal_method || method_name}".id }}
       def self.{{crystal_method.id}}
         self.new(nsclass.send_msg({{method_name}}))
       end
     end
 
     macro init_method(method_name, crystal_method = nil)
-      {{ "##{crystal_method ||= method_name}".id }}
+      {{ "##{crystal_method = crystal_method || method_name}".id }}
       def self.{{crystal_method.id}}
         self.new(nsclass.send_msg({{method_name}}))
       end
     end
 
     macro objc_method_helper(receiver, method_name, args = nil, returnType = nil, crystal_method = nil)
-      {{ "##{crystal_method ||= method_name}".id }}
-      {{ "##{args ||= [] of Symbol}".id }}
+      {{ "##{crystal_method = crystal_method || method_name}".id }}
+      {{ "##{args = args || [] of Symbol}".id }}
       def {{crystal_method.id}}({% for i in 0...args.size %}{% if i > 0 %} , {% end %} {{"arg#{i}".id}} {% if args[i] != :id && args[i] != :NSUInteger %}{% if args[i] == :BOOL %}: Bool{% end %}{% if args[i] == :NSString %}: String|NSString {% end %}{% if args[i] == :SEL %}: Selector|String? {% end %}{% if args[i] == :const_char_ptr %}: String {% end %}{% end %}{% end %})
 
         res = Hoop.send_msg({{receiver}}, {{method_name}}
@@ -107,12 +107,12 @@ module Hoop
     end
 
     macro objc_static_method(method_name, args = nil, returnType = nil, crystal_method = nil)
-      {{ "##{crystal_method ||= method_name}".id }}
+      {{ "##{crystal_method = crystal_method || method_name}".id }}
       objc_method_helper(nsclass.obj.as(Pointer(UInt8)), {{method_name}}, {{args}}, {{returnType}}, {{"self.#{crystal_method.id}"}})
     end
 
     macro static_method(method_name, args = nil, returnType = nil, crystal_method = nil)
-      {{ "##{crystal_method ||= method_name}".id }}
+      {{ "##{crystal_method = crystal_method || method_name}".id }}
       objc_method_helper(nsclass.obj.as(Pointer(UInt8)), {{method_name}}, {{args}}, {{returnType}}, {{"self.#{crystal_method.id}"}})
     end
 
@@ -137,8 +137,8 @@ module Hoop
       # TODO auto method tidy up.
       # ???? new lines breaks
       # ???? unable to extract type restriction on its own macro
-      {{ "##{crystal_method ||= method_name}".id }}
-      {{ "##{args ||= [] of Symbol}".id }}
+      {{ "##{crystal_method = crystal_method || method_name}".id }}
+      {{ "##{args = args || [] of Symbol}".id }}
 
       res = Hoop.send_msg({{receiver}}, {{method_name}}
         {% for i in 0...args.length %}
@@ -221,8 +221,8 @@ module Hoop
     end
 
     macro export(method_name, selector = nil, types_encoding = nil)
-      {{ "##{selector ||= method_name}".id }}
-      {{ "##{types_encoding ||= "v@:"}".id }}
+      {{ "##{selector = selector || method_name}".id }}
+      {{ "##{types_encoding = types_encoding || "v@:"}".id }}
       x_{{@type.name.id}}_{{method_name.id}}_imp = ->(obj : UInt8*, _cmd : LibObjC::SEL {% for t, i in types_encoding[3..-1].chars %}{{", a#{i} : UInt8*".id}}{% end %}) {
         ptr = LibObjC.objc_getAssociatedObject(obj, @@x_{{@type.name.id}}_assoc_key)
         if ptr.null?
@@ -245,7 +245,7 @@ module Hoop
             {% if i == 0 %}
               {{ a = "v@:@" }}
             {% else %}
-              {{ a += tmp_char }}
+              {{ a = a + tmp_char }}
               {% if tmp_char == ":" %}
                 {{ tmp_char = "@" }}
               {% else %}
